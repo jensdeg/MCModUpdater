@@ -7,10 +7,11 @@ var moddownloaders = typeof(Program).Assembly
     .ToList();
 
 List<string> mods = ["clientsort", "appleskin"];
+var version = "26.2";
 
 
 foreach(var downloader in moddownloaders)
 {
     if (downloader is null) continue;
-    await downloader.Download(mods, "26.2");
+    await downloader.Download(mods, version);
 }

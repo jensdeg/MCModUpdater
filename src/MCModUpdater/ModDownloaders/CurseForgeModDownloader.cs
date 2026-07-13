@@ -1,6 +1,4 @@
 ﻿using MCModUpdater.Helpers;
-using Microsoft.Playwright;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MCModUpdater.ModDownloaders;
 
@@ -8,38 +6,41 @@ public sealed class CurseForgeModDownloader : IModDownloader
 {
     public string DownloadPath { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + @"\Downloads";
 
-    private readonly PlaywrightHelper _playwright = new();
-
     private readonly string _curseforgeURL = "https://www.curseforge.com/minecraft";
 
-    public async Task Download(List<string> mods, string MCversion)
+    public async Task Download(List<string> mods, string MCVersion)
     {
-        await _playwright.Open(_curseforgeURL);
-        await _playwright.Press("Got it");
+        var downloadTasks = mods.Select(mod => DownloadSingle(mod, MCVersion)).ToList();
+        await Task.WhenAll(downloadTasks);
+    }
 
-        foreach(var mod in mods)
+    private async Task DownloadSingle(string mod, string MCversion)
+    {
+        var playwright = new PlaywrightHelper();
+
+        await playwright.Open(_curseforgeURL);
+        await playwright.Press("Got it");
+
+        // search mod
+        await playwright.Page.GetByLabel("Search for a project").FillAsync(mod);
+        await playwright.Page.Keyboard.PressAsync("Enter");
+        await playwright.Page.GetByLabel("Go To", new() { Exact = false }).First.ClickAsync();
+
+        // select version
+        await playwright.Press("download");
+        await playwright.Press("Accept");
+
+        if(!await playwright.SelectDropdownOptionCurseForge("Select Game Version", MCversion))
         {
-            // search mod
-            await _playwright.Page.GetByLabel("Search for a project").FillAsync(mod);
-            await _playwright.Page.Keyboard.PressAsync("Enter");
-            await _playwright.Page.GetByLabel("Go To", new() { Exact = false }).First.ClickAsync();
-
-            // select version
-            await _playwright.Press("download");
-            await _playwright.Page.WaitForTimeoutAsync(200);
-            var needsToAccept = await _playwright.Page.GetByRole(AriaRole.Button).GetByText("Accept").IsVisibleAsync();
-            if (needsToAccept) await _playwright.Press("Accept");
-
-            await _playwright.SelectDropdownOptionCurseForge("Select Game Version", MCversion);
-
-            //download
-            var downloadTask = _playwright.Page.WaitForDownloadAsync();
-            await _playwright.Page.GetByLabel("Download file").ClickAsync();
-            var download = await downloadTask;
-            await download.SaveAsAsync(Path.Combine(DownloadPath, download.SuggestedFilename));
-
-            //go back
-            await _playwright.Page.GotoAsync(_curseforgeURL);
+            Console.WriteLine($"couldn't find mod {mod} for version {MCversion} on CurseForge");
         }
+
+        //download
+        var downloadTask = playwright.Page.WaitForDownloadAsync();
+        await playwright.Page.GetByLabel("Download file").ClickAsync();
+        var download = await downloadTask;
+        await download.SaveAsAsync(Path.Combine(DownloadPath, download.SuggestedFilename));
+
+        await playwright.Dispose();
     }
 }
