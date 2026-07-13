@@ -8,10 +8,10 @@ var moddownloaders = typeof(Program).Assembly
 
 List<string> mods = ["clientsort", "appleskin"];
 var version = "26.2";
+var modloader = "Fabric";
 
-
-foreach(var downloader in moddownloaders)
+foreach (var downloader in moddownloaders)
 {
     if (downloader is null) continue;
-    await downloader.Download(mods, version);
+    await downloader.Download(mods, version, modloader);
 }

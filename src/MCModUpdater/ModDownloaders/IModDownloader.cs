@@ -2,5 +2,5 @@
 
 public interface IModDownloader
 {
-    Task Download(List<string> mods, string MCVersion);
+    Task Download(List<string> mods, string MCVersion, string modLoader);
 }
