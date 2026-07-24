@@ -24,10 +24,8 @@ public class PlaywrightHelper()
     }
 
     public async Task Press(string text, AriaRole ariaRole = AriaRole.Button)
-        => await Page.GetByRole(ariaRole).GetByText(text).ClickAsync();
+        => await Page.GetByRole(ariaRole).GetByText(text).ClickAsync(PlaywrightOptions.Click);
 
-    public async Task Select(string dropdown, string dropdownItem)
-        => await Page.GetByText(dropdown).First.SelectOptionAsync(dropdownItem);
 
     public async Task<bool> SelectDropdownOptionCurseForge(string dropdownLabel, string optionText)
     {
@@ -65,22 +63,28 @@ public class PlaywrightHelper()
         }
         _playwright?.Dispose();
     }
-
-    private static class PlaywrightOptions
-    {
-        public static BrowserNewContextOptions BrowserContext => new()
-        {
-            Locale = "en-US",
-        };
-
-        public static BrowserTypeLaunchOptions Launch => new()
-        {
-            Headless = false,
-        };
-
-        public static PageGotoOptions PageGoto => new()
-        {
-            WaitUntil = WaitUntilState.Load,
-        };
-    }
 }
+public static class PlaywrightOptions
+{
+    public static BrowserNewContextOptions BrowserContext => new()
+    {
+        Locale = "en-US",
+    };
+
+    public static BrowserTypeLaunchOptions Launch => new()
+    {
+        Headless = false,
+    };
+
+    public static PageGotoOptions PageGoto => new()
+    {
+        WaitUntil = WaitUntilState.Load,
+    };
+
+    public static LocatorClickOptions Click => new()
+    {
+        Timeout = 10000
+    };
+}
+
+
